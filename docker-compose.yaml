@@ -1,0 +1,75 @@
+version: '3'
+
+services:
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    labels:
+      - traefik.enable=false
+
+  app:
+    build: .
+    # ports:
+    #   - "3000"
+    environment:
+      - REDIS_HOST=redis
+    links:
+      - redis
+    labels:
+      - "traefik.http.routers.chat.rule=PathPrefix(`/`)"
+      - traefik.http.services.chat.loadBalancer.sticky.cookie.name=server_id
+      - traefik.http.services.chat.loadBalancer.sticky.cookie.httpOnly=true
+    networks:
+      - default
+      # - localmongo
+    external_links:
+      - localmongo1:mongo1
+      - localmongo2:mongo2
+      - localmongo3:mongo3
+
+  traefik:
+    image: traefik:2.4
+    volumes:
+      - ./traefik.yaml:/etc/traefik/traefik.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - app
+    ports:
+     - "3000:80"
+     - "8080:8080"
+
+  mongo1:
+    hostname: mongo1
+    container_name: localmongo1
+    image: mongo:4.0-xenial
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+  mongo2:
+    hostname: mongo2
+    container_name: localmongo2
+    image: mongo:4.0-xenial
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+  mongo3:
+    hostname: mongo3
+    container_name: localmongo3
+    image: mongo:4.0-xenial
+    expose:
+      - 27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+  mongosetup:
+    image: mongo:4.0-xenial
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    volumes:
+      - .:/scripts
+    restart: "no"
+    entrypoint: [ "bash", "/scripts/mongo_setup.sh"]

@@ -1,0 +1,19 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "no-underscore-dangle": "off",
+    "no-param-reassign": ["error", { "props": true, "ignorePropertyModificationsFor": ["ret", "res", "req"] }],
+    "no-loop-func": "off",
+    "no-console": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*test.js"],
+      "env": { "mocha": true },
+      "rules": {
+        "no-unused-expressions": "off",
+        "import/no-extraneous-dependencies": "off"
+      }
+    }
+  ]
+}
